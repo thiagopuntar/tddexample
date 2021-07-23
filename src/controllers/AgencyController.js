@@ -2,8 +2,9 @@ const ExistentAgencyError = require('../helpers/errors/ExistentAgencyError');
 const InvalidDataError = require('../helpers/errors/InvalidDataError');
 
 class AgencyController {
-  constructor(agencyService) {
+  constructor(agencyService, agencyRepository) {
     this.agencyService = agencyService;
+    this.agencyRepository = agencyRepository;
   }
 
   async create(req) {
@@ -13,7 +14,7 @@ class AgencyController {
     }
 
     const { license } = req.body;
-    const [existentAgency] = await this.agencyService.findAgencyByLicense(license);
+    const [existentAgency = {}] = await this.agencyService.findAgencyByLicense(license);
     const { status, isFromTokio, broker } = existentAgency;
     if (status === 'ACTIVE' && isFromTokio) {
       throw new ExistentAgencyError(license);
@@ -25,6 +26,10 @@ class AgencyController {
 
     if (status === 'PENDING' && broker.id === 0) {
       throw new ExistentAgencyError(license);
+    }
+
+    if (status === 'WAITING') {
+      await this.agencyRepository.delete(existentAgency.id);
     }
 
     return { status: 400 };

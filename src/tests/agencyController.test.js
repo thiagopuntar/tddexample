@@ -25,10 +25,15 @@ const makeSut = () => {
     findAgencyByLicense: jest.fn().mockResolvedValue([{}]),
   };
 
-  const sut = new AgencyController(agencyServiceSpy);
+  const agencyRepositorySpy = {
+    delete: jest.fn(),
+  };
+
+  const sut = new AgencyController(agencyServiceSpy, agencyRepositorySpy);
   return {
     sut,
     agencyServiceSpy,
+    agencyRepositorySpy,
   };
 };
 
@@ -108,6 +113,18 @@ describe('AgencyController', () => {
         return expect(sut.create(reqMock))
           .rejects
           .toThrow(new ExistentAgencyError(reqMock.body.license));
+      });
+      it('should call repository.deleteAgency when status = WAITING', async () => {
+        const { sut, agencyRepositorySpy, agencyServiceSpy } = makeSut();
+        const { reqMock } = makeReqRes();
+        const existentAgency = {
+          status: 'WAITING',
+          id: faker.random.alphaNumeric(),
+        };
+        agencyServiceSpy.findAgencyByLicense.mockResolvedValue([existentAgency]);
+
+        await sut.create(reqMock);
+        expect(agencyRepositorySpy.delete).toHaveBeenCalledWith(existentAgency.id);
       });
     });
   });
