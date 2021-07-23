@@ -46,7 +46,7 @@ describe('AgencyController', () => {
       expect(agencyServiceSpy.validate).toHaveBeenCalledWith(reqMock.body);
     });
 
-    it('should throw when service validator returns an array', () => {
+    it('should throw when service.validator returns an array', () => {
       const { sut, agencyServiceSpy } = makeSut();
       const { reqMock } = makeReqRes();
       const validateMockValue = [];
@@ -85,6 +85,22 @@ describe('AgencyController', () => {
           isFromTokio: true,
           broker: {
             status: faker.random.alphaNumeric(),
+          },
+        };
+
+        agencyServiceSpy.findAgencyByLicense.mockResolvedValue([existentAgency]);
+        return expect(sut.create(reqMock))
+          .rejects
+          .toThrow(new ExistentAgencyError(reqMock.body.license));
+      });
+
+      it('should throw if agency is PENDING and broker.id is 0', async () => {
+        const { sut, agencyServiceSpy } = makeSut();
+        const { reqMock } = makeReqRes();
+        const existentAgency = {
+          status: 'PENDING',
+          broker: {
+            id: 0,
           },
         };
 

@@ -23,6 +23,10 @@ class AgencyController {
       throw new ExistentAgencyError(license);
     }
 
+    if (status === 'PENDING' && broker.id === 0) {
+      throw new ExistentAgencyError(license);
+    }
+
     return { status: 400 };
   }
 }
