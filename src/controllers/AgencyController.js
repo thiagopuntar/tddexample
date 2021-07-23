@@ -1,3 +1,4 @@
+const ExistentAgencyError = require('../helpers/errors/ExistentAgencyError')
 const InvalidDataError = require('../helpers/errors/InvalidDataError')
 
 class AgencyController {
@@ -9,6 +10,11 @@ class AgencyController {
     const invalidData = this.agencyService.validate(req.body)
     if (invalidData) {
       throw new InvalidDataError(invalidData)
+    }
+
+    const [existentAgency] = await this.agencyService.findAgencyByLicense(req.body.license)
+    if (existentAgency.status === 'ACTIVE' && existentAgency.isFromTokio) {
+      throw new ExistentAgencyError(req.body.license)
     }
 
     return { status: 400 }
