@@ -14,7 +14,12 @@ class AgencyController {
 
     const { license } = req.body;
     const [existentAgency] = await this.agencyService.findAgencyByLicense(license);
-    if (existentAgency.status === 'ACTIVE' && existentAgency.isFromTokio) {
+    const { status, isFromTokio, broker } = existentAgency;
+    if (status === 'ACTIVE' && isFromTokio) {
+      throw new ExistentAgencyError(license);
+    }
+
+    if (status === 'PENDING' && isFromTokio && broker.status) {
       throw new ExistentAgencyError(license);
     }
 
