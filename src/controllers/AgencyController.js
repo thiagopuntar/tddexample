@@ -1,3 +1,4 @@
+const ExistentAgencyError = require('../helpers/errors/ExistentAgencyError');
 const InvalidDataError = require('../helpers/errors/InvalidDataError');
 
 class AgencyController {
@@ -13,8 +14,16 @@ class AgencyController {
     }
 
     const { license } = req.body;
-    const [existentAgency = {}] = await this.agencyService.findAgencyByLicense(license);
-    await this.agencyService.checkIfCanCreate(existentAgency);
+    const [existentAgency] = await this.agencyService.findAgencyByLicense(license);
+    if (existentAgency) {
+      const reasonItCantCreate = await this.agencyService.checkIfCanCreate(existentAgency);
+
+      if (reasonItCantCreate) {
+        throw new ExistentAgencyError(license, reasonItCantCreate);
+      }
+
+      await this.agencyService.deleteOrMigrate(existentAgency);
+    }
 
     return { status: 400 };
   }

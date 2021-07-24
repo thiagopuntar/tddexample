@@ -1,5 +1,6 @@
 const faker = require('faker');
 const AgencyController = require('../controllers/AgencyController');
+const ExistentAgencyError = require('../helpers/errors/ExistentAgencyError');
 const InvalidDataError = require('../helpers/errors/InvalidDataError');
 
 const makeReqRes = () => {
@@ -21,14 +22,9 @@ const makeReqRes = () => {
 const makeSut = () => {
   const agencyServiceSpy = {
     validate: jest.fn().mockReturnValue(null),
-    findAgencyByLicense: jest.fn().mockResolvedValue([
-      {
-        status: faker.random.alphaNumeric(),
-        isFromTokio: faker.datatype.boolean(),
-      },
-    ]),
-    checkIfCanCreate: jest.fn(),
-    migrateAgency: jest.fn(),
+    findAgencyByLicense: jest.fn().mockResolvedValue([]),
+    checkIfCanCreate: jest.fn().mockResolvedValue(null),
+    deleteOrMigrate: jest.fn(),
   };
 
   const agencyRepositorySpy = {
@@ -76,10 +72,61 @@ describe('AgencyController', () => {
     it('should call service.checkIfCanCreate when some agency already exists', async () => {
       const { sut, agencyServiceSpy } = makeSut();
       const { reqMock } = makeReqRes();
-      const [existentAgency] = await agencyServiceSpy.findAgencyByLicense();
+      const existentAgency = {
+        status: faker.random.alphaNumeric(),
+        isFromTokio: faker.datatype.boolean(),
+      };
+      agencyServiceSpy.findAgencyByLicense.mockResolvedValue([existentAgency]);
 
       await sut.create(reqMock);
       expect(agencyServiceSpy.checkIfCanCreate).toHaveBeenCalledWith(existentAgency);
+    });
+
+    it('should NOT call service.checkIfCanCreate when any agency exists', async () => {
+      const { sut, agencyServiceSpy } = makeSut();
+      const { reqMock } = makeReqRes();
+      agencyServiceSpy.findAgencyByLicense.mockResolvedValue([]);
+
+      await sut.create(reqMock);
+      expect(agencyServiceSpy.checkIfCanCreate).not.toHaveBeenCalled();
+    });
+
+    it('should throw when service.checkIfCanCreate returns not null', async () => {
+      const { sut, agencyServiceSpy } = makeSut();
+      const { reqMock } = makeReqRes();
+      const reasonItCantCreate = faker.random.words();
+      agencyServiceSpy.checkIfCanCreate.mockResolvedValue(reasonItCantCreate);
+      const existentAgency = {
+        status: faker.random.alphaNumeric(),
+        isFromTokio: faker.datatype.boolean(),
+      };
+      agencyServiceSpy.findAgencyByLicense.mockResolvedValue([existentAgency]);
+
+      return expect(sut.create(reqMock))
+        .rejects
+        .toThrow(new ExistentAgencyError(reqMock.body.license, reasonItCantCreate));
+    });
+
+    it('should call service.deleteOrMigrate when some agency already exists and can create another', async () => {
+      const { sut, agencyServiceSpy } = makeSut();
+      const { reqMock } = makeReqRes();
+      const existentAgency = {
+        status: faker.random.alphaNumeric(),
+        isFromTokio: faker.datatype.boolean(),
+      };
+      agencyServiceSpy.findAgencyByLicense.mockResolvedValue([existentAgency]);
+
+      await sut.create(reqMock);
+      expect(agencyServiceSpy.deleteOrMigrate).toHaveBeenCalledWith(existentAgency);
+    });
+
+    it('should NOT call service.deleteOrMigrate when any agency exists', async () => {
+      const { sut, agencyServiceSpy } = makeSut();
+      const { reqMock } = makeReqRes();
+      agencyServiceSpy.findAgencyByLicense.mockResolvedValue([]);
+
+      await sut.create(reqMock);
+      expect(agencyServiceSpy.deleteOrMigrate).not.toHaveBeenCalled();
     });
   });
 });
