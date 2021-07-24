@@ -1,7 +1,6 @@
 const faker = require('faker');
 const AgencyController = require('../controllers/AgencyController');
 const InvalidDataError = require('../helpers/errors/InvalidDataError');
-const ExistentAgencyError = require('../helpers/errors/ExistentAgencyError');
 
 const makeReqRes = () => {
   const reqMock = {
@@ -22,7 +21,14 @@ const makeReqRes = () => {
 const makeSut = () => {
   const agencyServiceSpy = {
     validate: jest.fn().mockReturnValue(null),
-    findAgencyByLicense: jest.fn().mockResolvedValue([{}]),
+    findAgencyByLicense: jest.fn().mockResolvedValue([
+      {
+        status: faker.random.alphaNumeric(),
+        isFromTokio: faker.datatype.boolean(),
+      },
+    ]),
+    checkIfCanCreate: jest.fn(),
+    migrateAgency: jest.fn(),
   };
 
   const agencyRepositorySpy = {
@@ -44,7 +50,7 @@ describe('AgencyController', () => {
       expect(sut.create).toBeDefined();
     });
 
-    it('should call service validator with request body', async () => {
+    it('should call service.validator with request body', async () => {
       const { sut, agencyServiceSpy } = makeSut();
       const { reqMock } = makeReqRes();
       await sut.create(reqMock);
@@ -67,65 +73,13 @@ describe('AgencyController', () => {
       expect(agencyServiceSpy.findAgencyByLicense).toHaveBeenCalledWith(reqMock.body.license);
     });
 
-    describe('If already exists some agency', () => {
-      it('should throw if agency is ACTIVE and is from Tokio', async () => {
-        const { sut, agencyServiceSpy } = makeSut();
-        const { reqMock } = makeReqRes();
-        const existentAgency = {
-          status: 'ACTIVE',
-          isFromTokio: true,
-        };
+    it('should call service.checkIfCanCreate when some agency already exists', async () => {
+      const { sut, agencyServiceSpy } = makeSut();
+      const { reqMock } = makeReqRes();
+      const [existentAgency] = await agencyServiceSpy.findAgencyByLicense();
 
-        agencyServiceSpy.findAgencyByLicense.mockResolvedValue([existentAgency]);
-        return expect(sut.create(reqMock))
-          .rejects
-          .toThrow(new ExistentAgencyError(reqMock.body.license));
-      });
-
-      it('should throw if agency is PENDING and is from Tokio with a broker.status', async () => {
-        const { sut, agencyServiceSpy } = makeSut();
-        const { reqMock } = makeReqRes();
-        const existentAgency = {
-          status: 'PENDING',
-          isFromTokio: true,
-          broker: {
-            status: faker.random.alphaNumeric(),
-          },
-        };
-
-        agencyServiceSpy.findAgencyByLicense.mockResolvedValue([existentAgency]);
-        return expect(sut.create(reqMock))
-          .rejects
-          .toThrow(new ExistentAgencyError(reqMock.body.license));
-      });
-
-      it('should throw if agency is PENDING and broker.id is 0', async () => {
-        const { sut, agencyServiceSpy } = makeSut();
-        const { reqMock } = makeReqRes();
-        const existentAgency = {
-          status: 'PENDING',
-          broker: {
-            id: 0,
-          },
-        };
-
-        agencyServiceSpy.findAgencyByLicense.mockResolvedValue([existentAgency]);
-        return expect(sut.create(reqMock))
-          .rejects
-          .toThrow(new ExistentAgencyError(reqMock.body.license));
-      });
-      it('should call repository.deleteAgency when status = WAITING', async () => {
-        const { sut, agencyRepositorySpy, agencyServiceSpy } = makeSut();
-        const { reqMock } = makeReqRes();
-        const existentAgency = {
-          status: 'WAITING',
-          id: faker.random.alphaNumeric(),
-        };
-        agencyServiceSpy.findAgencyByLicense.mockResolvedValue([existentAgency]);
-
-        await sut.create(reqMock);
-        expect(agencyRepositorySpy.delete).toHaveBeenCalledWith(existentAgency.id);
-      });
+      await sut.create(reqMock);
+      expect(agencyServiceSpy.checkIfCanCreate).toHaveBeenCalledWith(existentAgency);
     });
   });
 });
