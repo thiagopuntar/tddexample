@@ -12,7 +12,8 @@ const makeReqRes = () => {
   };
 
   const resMock = {
-    send: jest.fn(),
+    send: jest.fn().mockReturnThis(),
+    status: jest.fn().mockReturnThis(),
   };
 
   return {
@@ -23,22 +24,15 @@ const makeReqRes = () => {
 const makeSut = () => {
   const agencyServiceSpy = {
     validate: jest.fn().mockReturnValue(null),
-    findAgencyByLicense: jest.fn().mockResolvedValue([]),
-    checkIfCanCreate: jest.fn().mockResolvedValue(null),
-    deleteOrMigrate: jest.fn(),
+    findAgencyByLicense: jest.fn().mockResolvedValue(undefined),
     createAgencyAtBroker: jest.fn().mockResolvedValue({}),
     saveAgency: jest.fn(),
   };
 
-  const agencyRepositorySpy = {
-    delete: jest.fn(),
-  };
-
-  const sut = new AgencyController(agencyServiceSpy, agencyRepositorySpy);
+  const sut = new AgencyController(agencyServiceSpy);
   return {
     sut,
     agencyServiceSpy,
-    agencyRepositorySpy,
   };
 };
 
@@ -51,8 +45,8 @@ describe('AgencyController', () => {
 
     it('should call service.validator with request body', async () => {
       const { sut, agencyServiceSpy } = makeSut();
-      const { reqMock } = makeReqRes();
-      await sut.create(reqMock);
+      const { reqMock, resMock } = makeReqRes();
+      await sut.create(reqMock, resMock);
       expect(agencyServiceSpy.validate).toHaveBeenCalledWith(reqMock.body);
     });
 
@@ -64,79 +58,31 @@ describe('AgencyController', () => {
       return expect(sut.create(reqMock)).rejects.toThrow(new InvalidDataError(validateMockValue));
     });
 
-    it('should call service.findAgencyByLicense with body.license', async () => {
+    it('should throw if service.findAgencyByLicense return some agency', async () => {
       const { sut, agencyServiceSpy } = makeSut();
       const { reqMock } = makeReqRes();
-
-      await sut.create(reqMock);
-      expect(agencyServiceSpy.findAgencyByLicense).toHaveBeenCalledWith(reqMock.body.license);
-    });
-
-    it('should call service.checkIfCanCreate when some agency already exists', async () => {
-      const { sut, agencyServiceSpy } = makeSut();
-      const { reqMock } = makeReqRes();
-      const existentAgency = {
-        status: faker.random.alphaNumeric(),
-        isFromTokio: faker.datatype.boolean(),
-      };
-      agencyServiceSpy.findAgencyByLicense.mockResolvedValue([existentAgency]);
-
-      await sut.create(reqMock);
-      expect(agencyServiceSpy.checkIfCanCreate).toHaveBeenCalledWith(existentAgency);
-    });
-
-    it('should NOT call service.checkIfCanCreate when any agency exists', async () => {
-      const { sut, agencyServiceSpy } = makeSut();
-      const { reqMock } = makeReqRes();
-      agencyServiceSpy.findAgencyByLicense.mockResolvedValue([]);
-
-      await sut.create(reqMock);
-      expect(agencyServiceSpy.checkIfCanCreate).not.toHaveBeenCalled();
-    });
-
-    it('should throw when service.checkIfCanCreate returns not null', async () => {
-      const { sut, agencyServiceSpy } = makeSut();
-      const { reqMock } = makeReqRes();
-      const reasonItCantCreate = faker.random.words();
-      agencyServiceSpy.checkIfCanCreate.mockResolvedValue(reasonItCantCreate);
-      const existentAgency = {
-        status: faker.random.alphaNumeric(),
-        isFromTokio: faker.datatype.boolean(),
-      };
-      agencyServiceSpy.findAgencyByLicense.mockResolvedValue([existentAgency]);
+      const status = faker.random.word();
+      agencyServiceSpy.findAgencyByLicense.mockResolvedValue({
+        status,
+      });
 
       return expect(sut.create(reqMock))
         .rejects
-        .toThrow(new ExistentAgencyError(reqMock.body.license, reasonItCantCreate));
+        .toThrow(new ExistentAgencyError(reqMock.body.license, status));
     });
-
-    it('should call service.deleteOrMigrate when some agency already exists and can create another', async () => {
+    it('should call service.findAgencyByLicense with body.license', async () => {
       const { sut, agencyServiceSpy } = makeSut();
-      const { reqMock } = makeReqRes();
-      const existentAgency = {
-        status: faker.random.alphaNumeric(),
-        isFromTokio: faker.datatype.boolean(),
-      };
-      agencyServiceSpy.findAgencyByLicense.mockResolvedValue([existentAgency]);
+      const { reqMock, resMock } = makeReqRes();
 
-      await sut.create(reqMock);
-      expect(agencyServiceSpy.deleteOrMigrate).toHaveBeenCalledWith(existentAgency);
-    });
-
-    it('should NOT call service.deleteOrMigrate when any agency exists', async () => {
-      const { sut, agencyServiceSpy } = makeSut();
-      const { reqMock } = makeReqRes();
-      agencyServiceSpy.findAgencyByLicense.mockResolvedValue([]);
-
-      await sut.create(reqMock);
-      expect(agencyServiceSpy.deleteOrMigrate).not.toHaveBeenCalled();
+      await sut.create(reqMock, resMock);
+      expect(agencyServiceSpy.findAgencyByLicense).toHaveBeenCalledWith(reqMock.body.license);
     });
 
     it('should call service.createAgencyAtBroker', async () => {
       const { sut, agencyServiceSpy } = makeSut();
-      const { reqMock } = makeReqRes();
+      const { reqMock, resMock } = makeReqRes();
 
-      await sut.create(reqMock);
+      await sut.create(reqMock, resMock);
       expect(agencyServiceSpy.createAgencyAtBroker).toHaveBeenCalledWith(reqMock.body);
     });
 
@@ -151,11 +97,21 @@ describe('AgencyController', () => {
 
     it('should call service.saveAgency', async () => {
       const { sut, agencyServiceSpy } = makeSut();
-      const { reqMock } = makeReqRes();
+      const { reqMock, resMock } = makeReqRes();
       const brokerResponse = await agencyServiceSpy.createAgencyAtBroker();
 
-      await sut.create(reqMock);
+      await sut.create(reqMock, resMock);
       expect(agencyServiceSpy.saveAgency).toHaveBeenCalledWith(reqMock.body, brokerResponse);
+    });
+
+    it('should call res.send with broker result and 201 status', async () => {
+      const { sut, agencyServiceSpy } = makeSut();
+      const { reqMock, resMock } = makeReqRes();
+      const brokerResponse = await agencyServiceSpy.createAgencyAtBroker();
+
+      await sut.create(reqMock, resMock);
+      expect(resMock.send).toHaveBeenCalledWith(brokerResponse);
+      expect(resMock.status).toHaveBeenCalledWith(201);
     });
   });
 });

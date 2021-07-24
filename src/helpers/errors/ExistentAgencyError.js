@@ -1,5 +1,5 @@
 module.exports = class ExistentAgencyError extends Error {
-  constructor(license, reason = '') {
-    super(`There's already an agency registered with license ${license}. ${reason}`);
+  constructor(license, status) {
+    super(`There's already an agency registered with license ${license} with status ${status}`);
   }
 };

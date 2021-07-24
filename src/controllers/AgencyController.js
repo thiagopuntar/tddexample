@@ -8,21 +8,16 @@ class AgencyController {
     this.agencyRepository = agencyRepository;
   }
 
-  async create(req) {
+  async create(req, res) {
     const invalidData = this.agencyService.validate(req.body);
     if (invalidData) {
       throw new InvalidDataError(invalidData);
     }
 
     const { license } = req.body;
-    const [existentAgency] = await this.agencyService.findAgencyByLicense(license);
+    const existentAgency = await this.agencyService.findAgencyByLicense(license);
     if (existentAgency) {
-      const reasonItCantCreate = await this.agencyService.checkIfCanCreate(existentAgency);
-
-      if (reasonItCantCreate) {
-        throw new ExistentAgencyError(license, reasonItCantCreate);
-      }
-      await this.agencyService.deleteOrMigrate(existentAgency);
+      throw new ExistentAgencyError(license, existentAgency.status);
     }
 
     let brokerResponse;
@@ -34,7 +29,7 @@ class AgencyController {
 
     await this.agencyService.saveAgency(req.body, brokerResponse);
 
-    return { status: 400 };
+    res.status(201).send(brokerResponse);
   }
 }
 
