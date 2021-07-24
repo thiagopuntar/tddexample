@@ -1,3 +1,4 @@
+const BrokerError = require('../helpers/errors/BrokerError');
 const ExistentAgencyError = require('../helpers/errors/ExistentAgencyError');
 const InvalidDataError = require('../helpers/errors/InvalidDataError');
 
@@ -21,9 +22,17 @@ class AgencyController {
       if (reasonItCantCreate) {
         throw new ExistentAgencyError(license, reasonItCantCreate);
       }
-
       await this.agencyService.deleteOrMigrate(existentAgency);
     }
+
+    let brokerResponse;
+    try {
+      brokerResponse = await this.agencyService.createAgencyAtBroker(req.body);
+    } catch (error) {
+      throw new BrokerError(error.message);
+    }
+
+    await this.agencyService.saveAgency(req.body, brokerResponse);
 
     return { status: 400 };
   }

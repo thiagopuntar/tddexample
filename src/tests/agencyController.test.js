@@ -1,5 +1,6 @@
 const faker = require('faker');
 const AgencyController = require('../controllers/AgencyController');
+const BrokerError = require('../helpers/errors/BrokerError');
 const ExistentAgencyError = require('../helpers/errors/ExistentAgencyError');
 const InvalidDataError = require('../helpers/errors/InvalidDataError');
 
@@ -25,6 +26,8 @@ const makeSut = () => {
     findAgencyByLicense: jest.fn().mockResolvedValue([]),
     checkIfCanCreate: jest.fn().mockResolvedValue(null),
     deleteOrMigrate: jest.fn(),
+    createAgencyAtBroker: jest.fn().mockResolvedValue({}),
+    saveAgency: jest.fn(),
   };
 
   const agencyRepositorySpy = {
@@ -127,6 +130,32 @@ describe('AgencyController', () => {
 
       await sut.create(reqMock);
       expect(agencyServiceSpy.deleteOrMigrate).not.toHaveBeenCalled();
+    });
+
+    it('should call service.createAgencyAtBroker', async () => {
+      const { sut, agencyServiceSpy } = makeSut();
+      const { reqMock } = makeReqRes();
+
+      await sut.create(reqMock);
+      expect(agencyServiceSpy.createAgencyAtBroker).toHaveBeenCalledWith(reqMock.body);
+    });
+
+    it('should throw when service.createAgencyAtBroker throws', async () => {
+      const { sut, agencyServiceSpy } = makeSut();
+      const { reqMock } = makeReqRes();
+      const errorMessage = faker.random.words;
+      agencyServiceSpy.createAgencyAtBroker.mockRejectedValue(new Error(errorMessage));
+
+      return expect(sut.create(reqMock)).rejects.toThrow(new BrokerError(errorMessage));
+    });
+
+    it('should call service.saveAgency', async () => {
+      const { sut, agencyServiceSpy } = makeSut();
+      const { reqMock } = makeReqRes();
+      const brokerResponse = await agencyServiceSpy.createAgencyAtBroker();
+
+      await sut.create(reqMock);
+      expect(agencyServiceSpy.saveAgency).toHaveBeenCalledWith(reqMock.body, brokerResponse);
     });
   });
 });
