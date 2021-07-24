@@ -1,8 +1,8 @@
 const faker = require('faker');
-const AgencyController = require('../controllers/AgencyController');
-const BrokerError = require('../helpers/errors/BrokerError');
-const ExistentAgencyError = require('../helpers/errors/ExistentAgencyError');
-const InvalidDataError = require('../helpers/errors/InvalidDataError');
+const AgencyController = require('./AgencyController');
+const BrokerError = require('../../helpers/errors/BrokerError');
+const ExistentAgencyError = require('../../helpers/errors/ExistentAgencyError');
+const InvalidDataError = require('../../helpers/errors/InvalidDataError');
 
 const makeReqRes = () => {
   const reqMock = {

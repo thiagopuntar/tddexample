@@ -1,6 +1,6 @@
-const BrokerError = require('../helpers/errors/BrokerError');
-const ExistentAgencyError = require('../helpers/errors/ExistentAgencyError');
-const InvalidDataError = require('../helpers/errors/InvalidDataError');
+const BrokerError = require('../../helpers/errors/BrokerError');
+const ExistentAgencyError = require('../../helpers/errors/ExistentAgencyError');
+const InvalidDataError = require('../../helpers/errors/InvalidDataError');
 
 class AgencyController {
   constructor(agencyService, agencyRepository) {
