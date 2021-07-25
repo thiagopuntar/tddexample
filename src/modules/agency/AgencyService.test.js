@@ -111,26 +111,26 @@ describe('AgencyService', () => {
       const result = await sut.findValidAgencyByLicense();
       expect(result).toBe(agency);
     });
-
-    it('should call repository.deleteAgency when status = WAITING', async () => {
-      const { sut, agencyRepositorySpy } = makeSut();
-      const agency = {
-        status: 'WAITING',
-        id: faker.random.alphaNumeric(),
-      };
-      agencyRepositorySpy.findByLicense.mockResolvedValue(agency);
-      await sut.findValidAgencyByLicense();
-      expect(agencyRepositorySpy.deleteAgency).toHaveBeenCalledWith(agency.id);
-    });
-    it('should call repository.deleteAgency only when status = WAITING', async () => {
+    it('should call deleteOrMigrateOldAgency when invalid agency', async () => {
       const { sut, agencyRepositorySpy } = makeSut();
       const agency = {
         status: faker.random.word(),
         id: faker.random.alphaNumeric(),
       };
       agencyRepositorySpy.findByLicense.mockResolvedValue(agency);
+      sut.deleteOrMigrateOldAgency = jest.fn();
+
       await sut.findValidAgencyByLicense();
-      expect(agencyRepositorySpy.deleteAgency).not.toHaveBeenCalled();
+      expect(sut.deleteOrMigrateOldAgency).toHaveBeenCalledWith(agency);
     });
+    it('should return null when agency is found but is invalid', async () => {
+      const { sut, agencyRepositorySpy } = makeSut();
+      agencyRepositorySpy.findByLicense.mockResolvedValue({});
+      const result = await sut.findValidAgencyByLicense();
+      expect(result).toBe(null);
+    });
+  });
+  describe('deleteOrMigrateOldAgency', () => {
+
   });
 });
