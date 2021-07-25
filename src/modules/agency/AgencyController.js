@@ -8,28 +8,33 @@ class AgencyController {
     this.agencyRepository = agencyRepository;
   }
 
-  async create(req, res) {
-    const invalidData = this.agencyService.validate(req.body);
-    if (invalidData) {
-      throw new InvalidDataError(invalidData);
-    }
-
-    const { license } = req.body;
-    const existentValidAgency = await this.agencyService.findValidAgencyByLicense(license);
-    if (existentValidAgency) {
-      throw new ExistentAgencyError(license, existentValidAgency.status);
-    }
-
-    let brokerResponse;
+  async create(req, res, next) {
     try {
-      brokerResponse = await this.agencyService.createAgencyAtBroker(req.body);
+      const invalidData = this.agencyService.validate(req.body);
+      if (invalidData) {
+        throw new InvalidDataError(invalidData);
+      }
+
+      const { license } = req.body;
+      const existentValidAgency = await this.agencyService.findValidAgencyByLicense(license);
+      if (existentValidAgency) {
+        throw new ExistentAgencyError(license, existentValidAgency.status);
+      }
+
+      let brokerResponse;
+      try {
+        brokerResponse = await this.agencyService.createAgencyAtBroker(req.body);
+      } catch (error) {
+        throw new BrokerError(error.message);
+      }
+
+      await this.agencyService.saveAgency(req.body, brokerResponse);
+
+      res.status(201).send(brokerResponse);
     } catch (error) {
-      throw new BrokerError(error.message);
+      console.error(error);
+      next(error);
     }
-
-    await this.agencyService.saveAgency(req.body, brokerResponse);
-
-    res.status(201).send(brokerResponse);
   }
 }
 
