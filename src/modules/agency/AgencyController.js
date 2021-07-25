@@ -15,9 +15,9 @@ class AgencyController {
     }
 
     const { license } = req.body;
-    const existentAgency = await this.agencyService.findValidAgencyByLicense(license);
-    if (existentAgency) {
-      throw new ExistentAgencyError(license, existentAgency.status);
+    const existentValidAgency = await this.agencyService.findValidAgencyByLicense(license);
+    if (existentValidAgency) {
+      throw new ExistentAgencyError(license, existentValidAgency.status);
     }
 
     let brokerResponse;
