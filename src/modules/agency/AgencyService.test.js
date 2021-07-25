@@ -172,6 +172,7 @@ describe('AgencyService', () => {
     it('should NOT call repository.methods isFromTokio = true', async () => {
       const { sut, agencyRepositorySpy } = makeSut();
       const agency = {
+        isFromTokio: true,
         status: faker.random.word(),
         license: faker.random.word(),
         id: faker.random.alphaNumeric(),
