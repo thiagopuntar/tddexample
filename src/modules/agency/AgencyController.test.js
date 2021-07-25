@@ -58,7 +58,7 @@ describe('AgencyController', () => {
       return expect(sut.create(reqMock)).rejects.toThrow(new InvalidDataError(validateMockValue));
     });
 
-    it('should throw if service.findAgencyByLicense return some agency', async () => {
+    it('should throw if service.findValidAgencyByLicense return some agency', async () => {
       const { sut, agencyServiceSpy } = makeSut();
       const { reqMock } = makeReqRes();
       const status = faker.random.word();
@@ -70,7 +70,7 @@ describe('AgencyController', () => {
         .rejects
         .toThrow(new ExistentAgencyError(reqMock.body.license, status));
     });
-    it('should call service.findAgencyByLicense with body.license', async () => {
+    it('should call service.findValidAgencyByLicense with body.license', async () => {
       const { sut, agencyServiceSpy } = makeSut();
       const { reqMock, resMock } = makeReqRes();
 
