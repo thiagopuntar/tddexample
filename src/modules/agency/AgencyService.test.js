@@ -6,6 +6,7 @@ describe('AgencyService', () => {
     const agencyRepositorySpy = {
       findByLicense: jest.fn().mockResolvedValue(null),
       deleteAgency: jest.fn(),
+      updateAgency: jest.fn(),
     };
     const sut = new AgencyService(agencyRepositorySpy);
 
@@ -131,6 +132,53 @@ describe('AgencyService', () => {
     });
   });
   describe('deleteOrMigrateOldAgency', () => {
-
+    it('should call repository.deleteAgency only when status = WAITING', async () => {
+      const { sut, agencyRepositorySpy } = makeSut();
+      const agency = {
+        status: 'WAITING',
+        id: faker.random.alphaNumeric(),
+      };
+      await sut.deleteOrMigrateOldAgency(agency);
+      expect(agencyRepositorySpy.deleteAgency).toHaveBeenCalledWith(agency.id);
+    });
+    it('should call repository.updateAgency when status = ACTIVE and isFromTokio = false', async () => {
+      const { sut, agencyRepositorySpy } = makeSut();
+      const agency = {
+        status: 'ACTIVE',
+        license: faker.random.word(),
+        id: faker.random.alphaNumeric(),
+      };
+      const dataToUpdate = {
+        license: null,
+        oldLicense: agency.license,
+      };
+      await sut.deleteOrMigrateOldAgency(agency);
+      expect(agencyRepositorySpy.updateAgency).toHaveBeenCalledWith(agency.id, dataToUpdate);
+    });
+    it('should call repository.updateAgency when status = DISABLED and isFromTokio = false', async () => {
+      const { sut, agencyRepositorySpy } = makeSut();
+      const agency = {
+        status: 'DISABLED',
+        license: faker.random.word(),
+        id: faker.random.alphaNumeric(),
+      };
+      const dataToUpdate = {
+        license: null,
+        oldLicense: agency.license,
+      };
+      await sut.deleteOrMigrateOldAgency(agency);
+      expect(agencyRepositorySpy.updateAgency).toHaveBeenCalledWith(agency.id, dataToUpdate);
+    });
+    it('should NOT call repository.methods isFromTokio = true', async () => {
+      const { sut, agencyRepositorySpy } = makeSut();
+      const agency = {
+        status: faker.random.word(),
+        license: faker.random.word(),
+        id: faker.random.alphaNumeric(),
+      };
+      await sut.deleteOrMigrateOldAgency(agency);
+      expect(agencyRepositorySpy.updateAgency).not.toHaveBeenCalled();
+      expect(agencyRepositorySpy.deleteAgency).not.toHaveBeenCalled();
+    });
   });
 });

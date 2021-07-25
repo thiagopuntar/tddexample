@@ -23,15 +23,16 @@ module.exports = class AgencyService {
       return null;
     }
 
-    if (agency.status === 'ACTIVE' && agency.isFromTokio) {
+    const { status, isFromTokio, broker } = agency;
+    if (status === 'ACTIVE' && isFromTokio) {
       return agency;
     }
 
-    if (agency.status === 'PENDING' && agency.isFromTokio && agency.broker.status) {
+    if (status === 'PENDING' && isFromTokio && broker.status) {
       return agency;
     }
 
-    if (agency.status === 'PENDING' && agency.isFromTokio && agency.broker.id === 0) {
+    if (status === 'PENDING' && isFromTokio && broker.id === 0) {
       return agency;
     }
 
@@ -41,7 +42,18 @@ module.exports = class AgencyService {
   }
 
   async deleteOrMigrateOldAgency(agency) {
+    if (agency.status === 'WAITING') {
+      return this.agencyRepository.deleteAgency(agency.id);
+    }
 
+    if (['DISABLED', 'ACTIVE'].includes(agency.status) && !agency.isFromTokio) {
+      return this.agencyRepository.updateAgency(agency.id, {
+        license: null,
+        oldLicense: agency.license,
+      });
+    }
+
+    return null;
   }
 
   async createAgencyAtBroker() {
