@@ -4,7 +4,7 @@ module.exports = class AgencyService {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  validate(body) {
+  validate(body = {}) {
     const { license, name } = body;
     if (!license) {
       return 'license is required.';
