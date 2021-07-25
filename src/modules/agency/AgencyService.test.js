@@ -5,6 +5,7 @@ describe('AgencyService', () => {
   const makeSut = () => {
     const agencyRepositorySpy = {
       findByLicense: jest.fn().mockResolvedValue(null),
+      deleteAgency: jest.fn(),
     };
     const sut = new AgencyService(agencyRepositorySpy);
 
@@ -109,6 +110,27 @@ describe('AgencyService', () => {
       agencyRepositorySpy.findByLicense.mockResolvedValue(agency);
       const result = await sut.findValidAgencyByLicense();
       expect(result).toBe(agency);
+    });
+
+    it('should call repository.deleteAgency when status = WAITING', async () => {
+      const { sut, agencyRepositorySpy } = makeSut();
+      const agency = {
+        status: 'WAITING',
+        id: faker.random.alphaNumeric(),
+      };
+      agencyRepositorySpy.findByLicense.mockResolvedValue(agency);
+      await sut.findValidAgencyByLicense();
+      expect(agencyRepositorySpy.deleteAgency).toHaveBeenCalledWith(agency.id);
+    });
+    it('should call repository.deleteAgency only when status = WAITING', async () => {
+      const { sut, agencyRepositorySpy } = makeSut();
+      const agency = {
+        status: faker.random.word(),
+        id: faker.random.alphaNumeric(),
+      };
+      agencyRepositorySpy.findByLicense.mockResolvedValue(agency);
+      await sut.findValidAgencyByLicense();
+      expect(agencyRepositorySpy.deleteAgency).not.toHaveBeenCalled();
     });
   });
 });

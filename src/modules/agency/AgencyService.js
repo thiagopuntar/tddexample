@@ -35,6 +35,10 @@ module.exports = class AgencyService {
       return agency;
     }
 
+    if (agency.status === 'WAITING') {
+      await this.agencyRepository.deleteAgency(agency.id);
+    }
+
     return null;
   }
 
