@@ -17,7 +17,7 @@ module.exports = class AgencyService {
     return null;
   }
 
-  async findAgencyByLicense(license) {
+  async findValidAgencyByLicense(license) {
     const agency = await this.agencyRepository.findByLicense(license);
     if (!agency) {
       return null;
@@ -28,6 +28,10 @@ module.exports = class AgencyService {
     }
 
     if (agency.status === 'PENDING' && agency.isFromTokio && agency.broker.status) {
+      return agency;
+    }
+
+    if (agency.status === 'PENDING' && agency.isFromTokio && agency.broker.id === 0) {
       return agency;
     }
 

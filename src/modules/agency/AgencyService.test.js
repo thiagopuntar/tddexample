@@ -21,7 +21,7 @@ describe('AgencyService', () => {
     });
     it('should have method findAgencyByLicense defined', () => {
       const { sut } = makeSut();
-      expect(sut.findAgencyByLicense).toBeDefined();
+      expect(sut.findValidAgencyByLicense).toBeDefined();
     });
     it('should have method createAgencyAtBroker defined', () => {
       const { sut } = makeSut();
@@ -62,16 +62,16 @@ describe('AgencyService', () => {
       expect(result).toMatch('required');
     });
   });
-  describe('findAgencyByLicense', () => {
+  describe('findValidAgencyByLicense', () => {
     it('should call repository.findByLicence', async () => {
       const { sut, agencyRepositorySpy } = makeSut();
       const license = faker.random.word();
-      await sut.findAgencyByLicense(license);
+      await sut.findValidAgencyByLicense(license);
       expect(agencyRepositorySpy.findByLicense).toHaveBeenCalledWith(license);
     });
     it('should return null when no agency is found', async () => {
       const { sut } = makeSut();
-      const result = await sut.findAgencyByLicense();
+      const result = await sut.findValidAgencyByLicense();
       expect(result).toBe(null);
     });
     it('should return found agency when status ACTIVE & isFromTokio', async () => {
@@ -81,7 +81,7 @@ describe('AgencyService', () => {
         isFromTokio: true,
       };
       agencyRepositorySpy.findByLicense.mockResolvedValue(agency);
-      const result = await sut.findAgencyByLicense();
+      const result = await sut.findValidAgencyByLicense();
       expect(result).toBe(agency);
     });
     it('should return found agency when status PENDING, isFromTokio & broker.status is truthy', async () => {
@@ -94,7 +94,20 @@ describe('AgencyService', () => {
         },
       };
       agencyRepositorySpy.findByLicense.mockResolvedValue(agency);
-      const result = await sut.findAgencyByLicense();
+      const result = await sut.findValidAgencyByLicense();
+      expect(result).toBe(agency);
+    });
+    it('should return found agency when status PENDING, isFromTokio & broker.id 0', async () => {
+      const { sut, agencyRepositorySpy } = makeSut();
+      const agency = {
+        status: 'PENDING',
+        isFromTokio: true,
+        broker: {
+          id: 0,
+        },
+      };
+      agencyRepositorySpy.findByLicense.mockResolvedValue(agency);
+      const result = await sut.findValidAgencyByLicense();
       expect(result).toBe(agency);
     });
   });

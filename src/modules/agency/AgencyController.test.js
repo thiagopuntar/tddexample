@@ -24,7 +24,7 @@ const makeReqRes = () => {
 const makeSut = () => {
   const agencyServiceSpy = {
     validate: jest.fn().mockReturnValue(null),
-    findAgencyByLicense: jest.fn().mockResolvedValue(undefined),
+    findValidAgencyByLicense: jest.fn().mockResolvedValue(undefined),
     createAgencyAtBroker: jest.fn().mockResolvedValue({}),
     saveAgency: jest.fn(),
   };
@@ -62,7 +62,7 @@ describe('AgencyController', () => {
       const { sut, agencyServiceSpy } = makeSut();
       const { reqMock } = makeReqRes();
       const status = faker.random.word();
-      agencyServiceSpy.findAgencyByLicense.mockResolvedValue({
+      agencyServiceSpy.findValidAgencyByLicense.mockResolvedValue({
         status,
       });
 
@@ -75,7 +75,7 @@ describe('AgencyController', () => {
       const { reqMock, resMock } = makeReqRes();
 
       await sut.create(reqMock, resMock);
-      expect(agencyServiceSpy.findAgencyByLicense).toHaveBeenCalledWith(reqMock.body.license);
+      expect(agencyServiceSpy.findValidAgencyByLicense).toHaveBeenCalledWith(reqMock.body.license);
     });
 
     it('should call service.createAgencyAtBroker', async () => {
