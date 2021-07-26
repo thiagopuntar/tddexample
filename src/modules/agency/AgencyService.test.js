@@ -1,5 +1,8 @@
 const faker = require('faker');
+const axios = require('axios');
 const AgencyService = require('./AgencyService');
+
+jest.mock('axios');
 
 describe('AgencyService', () => {
   const makeSut = () => {
@@ -180,6 +183,38 @@ describe('AgencyService', () => {
       await sut.deleteOrMigrateOldAgency(agency);
       expect(agencyRepositorySpy.updateAgency).not.toHaveBeenCalled();
       expect(agencyRepositorySpy.deleteAgency).not.toHaveBeenCalled();
+    });
+  });
+  describe('createAgencyAtBroker', () => {
+    let axiosResponse;
+    beforeEach(() => {
+      axiosResponse = {
+        data: {
+          status: faker.random.word(),
+        },
+      };
+      axios.post.mockResolvedValue(axiosResponse);
+    });
+
+    afterEach(() => {
+      jest.resetAllMocks();
+    });
+    it('should POST to tokio endpoint', async () => {
+      const { sut } = makeSut();
+      await sut.createAgencyAtBroker();
+      expect(axios.post).toHaveBeenCalled();
+    });
+    it('should throw when POST fail', async () => {
+      const { sut } = makeSut();
+      axios.post.mockRejectedValue(new Error());
+      return expect(sut.createAgencyAtBroker()).rejects.toThrow();
+    });
+
+    it('should return tokio response data', async () => {
+      const { sut } = makeSut();
+
+      const result = await sut.createAgencyAtBroker();
+      expect(result).toBe(axiosResponse.data);
     });
   });
 });

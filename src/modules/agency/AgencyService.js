@@ -1,3 +1,6 @@
+/* eslint-disable class-methods-use-this */
+const axios = require('axios');
+
 module.exports = class AgencyService {
   constructor(agencyRepository) {
     this.agencyRepository = agencyRepository;
@@ -57,10 +60,11 @@ module.exports = class AgencyService {
   }
 
   async createAgencyAtBroker() {
-    return this;
+    const response = await axios.post();
+    return response.data;
   }
 
   async saveAgency() {
-    return this;
+    console.log('Saving agency in DB');
   }
 };
