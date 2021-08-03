@@ -2,6 +2,19 @@
 
 Este projeto tem por fim ser um exercício de desenvolvimento utilizando TDD.
 
+## Referências de estudo
+
+### Curso do Willam Justen específico sobre TDD
+https://www.udemy.com/course/js-com-tdd-na-pratica/
+
+
+### Curso do Mosh Hamedani sobre Node.js com módulo de testes e TDD
+https://www.udemy.com/course/nodejs-master-class/
+
+
+### Playlist de Clean Arch, TDD com Vanilla Node.js do Manguinho
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/vV1wQ6GFH0A" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 ---
 ## Premissas
 
@@ -31,7 +44,7 @@ Classe responsável por isolar as regras de negócio da aplicação.
 
 ### Repository
 
-Classe responsável por fazer a interface com as fontes de dado. 
+Classe responsável por fazer a interface com as fontes de dados. 
 São invocadas pelas classes de serviço
 
 ## Regra de negócio para desenvolvimento
