@@ -14,7 +14,8 @@ https://www.udemy.com/course/nodejs-master-class/
 
 ### Playlist de Clean Arch, TDD com Vanilla Node.js do Manguinho
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/vV1wQ6GFH0A" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+https://youtube.com/playlist?list=PL9aKtVrF05DyEwK5kdvzrYXFdpZfj1dsG
+
 ---
 ## Premissas
 
